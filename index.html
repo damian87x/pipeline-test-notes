@@ -10,6 +10,8 @@
   main { max-width: 40rem; margin: 1.5rem auto; padding: 0 1rem; }
   li { margin: .4em 0; }
   header button { margin-left: auto; }
+  [data-id=tags] button { margin: .2em .3em .2em 0; border-radius: 1em; }
+  [data-id=tags] button[aria-pressed=true] { font-weight: bold; text-decoration: underline; }
   :root[data-theme=dark] body { background: #16181d; color: #e8e8e8; }
   :root[data-theme=dark] header { border-bottom-color: #333; }
   .toast { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); background: #222; color: #fff; padding: .6rem 1rem; border-radius: .4rem; display: flex; gap: .75rem; align-items: center; }
@@ -31,6 +33,7 @@
     <input data-id="text" placeholder="Write a note" aria-label="Note text">
     <button data-id="add">Add</button>
   </form>
+  <div data-id="tags"></div>
   <ul data-id="list"></ul>
 </main>
 <div data-id="toast" class="toast" role="status" hidden>
@@ -45,6 +48,7 @@
   import { togglePin, sortPinned } from './src/pin.js';
   import { editNote } from './src/edit.js';
   import { startUndo } from './src/undo.js';
+  import { extractTags, filterByTag } from './src/tags.js';
   const themeBtn = document.querySelector('[data-id=theme]');
   const applyTheme = (name) => { document.documentElement.dataset.theme = name; themeBtn.textContent = name === 'dark' ? 'Light theme' : 'Dark theme'; };
   applyTheme(getTheme(localStorage));
@@ -55,9 +59,27 @@
   const toast = document.querySelector('[data-id=toast]');
   const toastText = document.querySelector('[data-id=toast-text]');
   let pending = null; // { id, cancel }: a deleted note waiting out its undo countdown
+  const tagBar = document.querySelector('[data-id=tags]');
+  let activeTag = null;
+  const renderTags = (notes) => {
+    const all = [...new Set(notes.flatMap((n) => extractTags(n.text)))];
+    tagBar.innerHTML = '';
+    for (const t of all) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.dataset.id = 'tag';
+      chip.dataset.tag = t;
+      chip.textContent = '#' + t;
+      chip.setAttribute('aria-pressed', String(activeTag === t));
+      chip.addEventListener('click', () => { activeTag = activeTag === t ? null : t; render(); });
+      tagBar.append(chip);
+    }
+  };
   const render = () => {
+    const notes = listNotes(localStorage);
+    renderTags(notes);
     list.innerHTML = '';
-    for (const n of sortPinned(filterNotes(listNotes(localStorage), search.value)).filter((n) => !pending || n.id !== pending.id)) {
+    for (const n of sortPinned(filterByTag(filterNotes(notes, search.value), activeTag)).filter((n) => !pending || n.id !== pending.id)) {
       const li = document.createElement('li');
       li.dataset.id = 'note';
       if (editingId === n.id) {
