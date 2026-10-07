@@ -14,3 +14,8 @@ export function filterByTag(notes, tag) {
   if (!t) return notes;
   return notes.filter((n) => extractTags(n.text).includes(t));
 }
+
+export function resolveActiveTag(notes, activeTag) {
+  if (!activeTag) return null;
+  return notes.some((n) => extractTags(n.text).includes(activeTag)) ? activeTag : null;
+}

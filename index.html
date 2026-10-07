@@ -48,7 +48,7 @@
   import { togglePin, sortPinned } from './src/pin.js';
   import { editNote } from './src/edit.js';
   import { startUndo } from './src/undo.js';
-  import { extractTags, filterByTag } from './src/tags.js';
+  import { extractTags, filterByTag, resolveActiveTag } from './src/tags.js';
   const themeBtn = document.querySelector('[data-id=theme]');
   const applyTheme = (name) => { document.documentElement.dataset.theme = name; themeBtn.textContent = name === 'dark' ? 'Light theme' : 'Dark theme'; };
   applyTheme(getTheme(localStorage));
@@ -77,6 +77,7 @@
   };
   const render = () => {
     const notes = listNotes(localStorage);
+    activeTag = resolveActiveTag(notes, activeTag);
     renderTags(notes);
     list.innerHTML = '';
     for (const n of sortPinned(filterByTag(filterNotes(notes, search.value), activeTag)).filter((n) => !pending || n.id !== pending.id)) {

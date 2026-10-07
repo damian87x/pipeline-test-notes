@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { extractTags, filterByTag } from '../src/tags.js';
+import { extractTags, filterByTag, resolveActiveTag } from '../src/tags.js';
 
 test('extractTags returns lowercase unique #tags in first-seen order', () => {
   assert.deepEqual(extractTags('Buy milk #Shopping and #home, then #shopping again'), ['shopping', 'home']);
@@ -33,4 +33,16 @@ test('filterByTag with an empty tag returns every note', () => {
 });
 test('filterByTag with an unknown tag returns empty list', () => {
   assert.deepEqual(filterByTag(notes, 'zzz'), []);
+});
+
+test('resolveActiveTag keeps the active tag while some note still carries it', () => {
+  assert.equal(resolveActiveTag(notes, 'shopping'), 'shopping');
+  assert.equal(resolveActiveTag([{ id: 9, text: 'x #Shopping' }], 'shopping'), 'shopping');
+});
+test('resolveActiveTag clears the tag once no note carries it (e.g. last note deleted)', () => {
+  assert.equal(resolveActiveTag(notes.slice(1, 2), 'shopping'), null);
+  assert.equal(resolveActiveTag([], 'shopping'), null);
+});
+test('resolveActiveTag with no active tag returns null', () => {
+  assert.equal(resolveActiveTag(notes, null), null);
 });
