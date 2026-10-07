@@ -9,11 +9,17 @@
   header { padding: 1rem 1.5rem; border-bottom: 1px solid #ddd; display: flex; gap: 1rem; align-items: center; }
   main { max-width: 40rem; margin: 1.5rem auto; padding: 0 1rem; }
   li { margin: .4em 0; }
+  li[data-color=red] { background: #ffdede; }
+  li[data-color=green] { background: #def5df; }
+  li[data-color=blue] { background: #dfeaff; }
   header select { margin-left: auto; }
   [data-id=tags] button { margin: .2em .3em .2em 0; border-radius: 1em; }
   [data-id=tags] button[aria-pressed=true] { font-weight: bold; text-decoration: underline; }
   :root[data-theme=dark] body { background: #16181d; color: #e8e8e8; }
   :root[data-theme=dark] header { border-bottom-color: #333; }
+  :root[data-theme=dark] li[data-color=red] { background: #542d32; }
+  :root[data-theme=dark] li[data-color=green] { background: #294b32; }
+  :root[data-theme=dark] li[data-color=blue] { background: #2d3e5c; }
   footer { max-width: 40rem; margin: 0 auto; padding: 0 1rem; }
   .toast { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); background: #222; color: #fff; padding: .6rem 1rem; border-radius: .4rem; display: flex; gap: .75rem; align-items: center; }
   .toast[hidden] { display: none; }
@@ -65,6 +71,7 @@
   import { emptyMessage } from './src/emptystate.js';
   import { remaining, canSave } from './src/limit.js';
   import { sortNotes, getSort, setSort } from './src/sort.js';
+  import { setColor } from './src/color.js';
   import { parseImport, mergeImport } from './src/import.js';
   import { KEY } from './src/notes.js';
   const themeBtn = document.querySelector('[data-id=theme]');
@@ -109,6 +116,7 @@
       const li = document.createElement('li');
       li.dataset.id = 'note';
       li.dataset.noteId = String(n.id);
+      li.dataset.color = ['none', 'red', 'green', 'blue'].includes(n.color) ? n.color : 'none';
       if (editingId === n.id) {
         const input = document.createElement('input');
         input.dataset.id = 'edit-text';
@@ -142,6 +150,23 @@
       duplicateBtn.type = 'button';
       duplicateBtn.textContent = 'Duplicate';
       li.append(duplicateBtn, ' ');
+      const color = document.createElement('select');
+      color.dataset.id = 'color';
+      color.setAttribute('aria-label', `Color for note: ${n.text}`);
+      for (const name of ['none', 'red', 'green', 'blue']) {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        color.append(option);
+      }
+      color.value = li.dataset.color;
+      color.addEventListener('change', () => {
+        const notes = listNotes(localStorage);
+        setColor(notes, n.id, color.value);
+        localStorage.setItem(KEY, JSON.stringify(notes));
+        render();
+      });
+      li.append(color, ' ');
       li.insertAdjacentHTML('beforeend', renderDeleteButton(n));
       list.append(li);
       if (editingId === n.id) li.querySelector('[data-id=edit-text]').focus();
