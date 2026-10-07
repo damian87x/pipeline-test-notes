@@ -37,20 +37,41 @@
   import { filterNotes } from './src/search.js';
   import { getTheme, setTheme } from './src/theme.js';
   import { togglePin, sortPinned } from './src/pin.js';
+  import { editNote } from './src/edit.js';
   const themeBtn = document.querySelector('[data-id=theme]');
   const applyTheme = (name) => { document.documentElement.dataset.theme = name; themeBtn.textContent = name === 'dark' ? 'Light theme' : 'Dark theme'; };
   applyTheme(getTheme(localStorage));
   themeBtn.addEventListener('click', () => { const next = getTheme(localStorage) === 'dark' ? 'light' : 'dark'; setTheme(localStorage, next); applyTheme(next); });
   const list = document.querySelector('[data-id=list]');
   const search = document.querySelector('[data-id=search]');
+  let editingId = null;
   const render = () => {
     list.innerHTML = '';
     for (const n of sortPinned(filterNotes(listNotes(localStorage), search.value))) {
       const li = document.createElement('li');
       li.dataset.id = 'note';
-      const span = document.createElement('span');
-      span.textContent = n.text;
-      li.append(span, ' ');
+      if (editingId === n.id) {
+        const input = document.createElement('input');
+        input.dataset.id = 'edit-text';
+        input.value = n.text;
+        input.setAttribute('aria-label', 'Edit note text');
+        input.addEventListener('keydown', (e) => {
+          if (e.key !== 'Enter') return;
+          editNote(localStorage, n.id, input.value);
+          editingId = null;
+          render();
+        });
+        li.append(input, ' ');
+      } else {
+        const span = document.createElement('span');
+        span.textContent = n.text;
+        li.append(span, ' ');
+      }
+      const editBtn = document.createElement('button');
+      editBtn.dataset.id = 'edit';
+      editBtn.textContent = 'Edit';
+      editBtn.addEventListener('click', () => { editingId = n.id; render(); });
+      li.append(editBtn, ' ');
       const btn = document.createElement('button');
       btn.dataset.id = 'pin';
       btn.textContent = n.pinned ? 'Unpin' : 'Pin';
@@ -58,6 +79,7 @@
       li.append(btn, ' ');
       li.insertAdjacentHTML('beforeend', renderDeleteButton(n));
       list.append(li);
+      if (editingId === n.id) li.querySelector('[data-id=edit-text]').focus();
     }
   };
   list.addEventListener('click', (e) => {
