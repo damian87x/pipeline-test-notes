@@ -35,6 +35,7 @@
   </form>
   <div data-id="tags"></div>
   <ul data-id="list"></ul>
+  <p><button data-id="export" type="button">Export notes.json</button></p>
 </main>
 <div data-id="toast" class="toast" role="status" hidden>
   <span data-id="toast-text"></span>
@@ -49,6 +50,7 @@
   import { editNote } from './src/edit.js';
   import { startUndo } from './src/undo.js';
   import { extractTags, filterByTag, resolveActiveTag } from './src/tags.js';
+  import { toJson } from './src/export.js';
   const themeBtn = document.querySelector('[data-id=theme]');
   const applyTheme = (name) => { document.documentElement.dataset.theme = name; themeBtn.textContent = name === 'dark' ? 'Light theme' : 'Dark theme'; };
   applyTheme(getTheme(localStorage));
@@ -139,6 +141,16 @@
     e.preventDefault();
     const input = document.querySelector('[data-id=text]');
     if (input.value.trim()) { createNote(localStorage, input.value); input.value = ''; render(); }
+  });
+  document.querySelector('[data-id=export]').addEventListener('click', () => {
+    const url = URL.createObjectURL(new Blob([toJson(listNotes(localStorage))], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'notes.json';
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   });
   search.addEventListener('input', render);
   render();
