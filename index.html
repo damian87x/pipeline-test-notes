@@ -73,6 +73,7 @@
   import { countText } from './src/count.js';
   import { wordCount } from './src/words.js';
   import { formatCreated } from './src/created.js';
+  import { truncateNote } from './src/truncate.js';
   import { emptyMessage } from './src/emptystate.js';
   import { remaining, canSave } from './src/limit.js';
   import { sortNotes, getSort, setSort } from './src/sort.js';
@@ -141,7 +142,8 @@
         li.append(input, ' ');
       } else {
         const span = document.createElement('span');
-        span.textContent = n.text;
+        span.dataset.id = 'note-text';
+        span.textContent = truncateNote(n.text, 100);
         li.append(span, ' ');
       }
       const created = document.createElement('span');
