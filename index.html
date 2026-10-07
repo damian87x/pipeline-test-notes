@@ -36,13 +36,30 @@
   import { deleteNote, renderDeleteButton } from './src/delete.js';
   import { filterNotes } from './src/search.js';
   import { getTheme, setTheme } from './src/theme.js';
+  import { togglePin, sortPinned } from './src/pin.js';
   const themeBtn = document.querySelector('[data-id=theme]');
   const applyTheme = (name) => { document.documentElement.dataset.theme = name; themeBtn.textContent = name === 'dark' ? 'Light theme' : 'Dark theme'; };
   applyTheme(getTheme(localStorage));
   themeBtn.addEventListener('click', () => { const next = getTheme(localStorage) === 'dark' ? 'light' : 'dark'; setTheme(localStorage, next); applyTheme(next); });
   const list = document.querySelector('[data-id=list]');
   const search = document.querySelector('[data-id=search]');
-  const render = () => { list.innerHTML = ''; for (const n of filterNotes(listNotes(localStorage), search.value)) { const li = document.createElement('li'); const span = document.createElement('span'); span.textContent = n.text; li.append(span, ' '); li.insertAdjacentHTML('beforeend', renderDeleteButton(n)); list.append(li); } };
+  const render = () => {
+    list.innerHTML = '';
+    for (const n of sortPinned(filterNotes(listNotes(localStorage), search.value))) {
+      const li = document.createElement('li');
+      li.dataset.id = 'note';
+      const span = document.createElement('span');
+      span.textContent = n.text;
+      li.append(span, ' ');
+      const btn = document.createElement('button');
+      btn.dataset.id = 'pin';
+      btn.textContent = n.pinned ? 'Unpin' : 'Pin';
+      btn.addEventListener('click', () => { togglePin(localStorage, n.id); render(); });
+      li.append(btn, ' ');
+      li.insertAdjacentHTML('beforeend', renderDeleteButton(n));
+      list.append(li);
+    }
+  };
   list.addEventListener('click', (e) => {
     const b = e.target.closest('[data-id=delete]');
     if (b) { deleteNote(localStorage, Number(b.dataset.noteId)); render(); }

@@ -1,4 +1,4 @@
-const KEY = 'notes.v1';
+export const KEY = 'notes.v1';
 
 export function listNotes(storage) {
   try {
