@@ -56,6 +56,7 @@
   import { getTheme, setTheme } from './src/theme.js';
   import { togglePin, sortPinned } from './src/pin.js';
   import { editNote } from './src/edit.js';
+  import { duplicateNote } from './src/duplicate.js';
   import { startUndo } from './src/undo.js';
   import { extractTags, filterByTag, resolveActiveTag } from './src/tags.js';
   import { toJson } from './src/export.js';
@@ -102,6 +103,7 @@
     for (const n of sortPinned(sortNotes(filterByTag(filterNotes(notes, search.value), activeTag), getSort(localStorage))).filter((n) => !pending || n.id !== pending.id)) {
       const li = document.createElement('li');
       li.dataset.id = 'note';
+      li.dataset.noteId = String(n.id);
       if (editingId === n.id) {
         const input = document.createElement('input');
         input.dataset.id = 'edit-text';
@@ -129,12 +131,32 @@
       btn.textContent = n.pinned ? 'Unpin' : 'Pin';
       btn.addEventListener('click', () => { togglePin(localStorage, n.id); render(); });
       li.append(btn, ' ');
+      const duplicateBtn = document.createElement('button');
+      duplicateBtn.dataset.id = 'duplicate';
+      duplicateBtn.dataset.noteId = String(n.id);
+      duplicateBtn.type = 'button';
+      duplicateBtn.textContent = 'Duplicate';
+      li.append(duplicateBtn, ' ');
       li.insertAdjacentHTML('beforeend', renderDeleteButton(n));
       list.append(li);
       if (editingId === n.id) li.querySelector('[data-id=edit-text]').focus();
     }
   };
   list.addEventListener('click', (e) => {
+    const duplicateBtn = e.target.closest('[data-id=duplicate]');
+    if (duplicateBtn) {
+      const id = Number(duplicateBtn.dataset.noteId);
+      const notes = listNotes(localStorage);
+      const duplicated = duplicateNote(notes, id);
+      if (duplicated === notes) return;
+      localStorage.setItem(KEY, JSON.stringify(duplicated));
+      render();
+      const sourceEl = list.querySelector(`[data-note-id="${id}"]`);
+      const copyId = Math.max(...duplicated.map((note) => note.id));
+      const copyEl = list.querySelector(`[data-note-id="${copyId}"]`);
+      if (sourceEl && copyEl) sourceEl.after(copyEl);
+      return;
+    }
     const b = e.target.closest('[data-id=delete]');
     if (!b) return;
     if (pending) { pending.cancel(); deleteNote(localStorage, pending.id); pending = null; }
