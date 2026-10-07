@@ -40,6 +40,7 @@
     <button data-id="add">Add</button>
   </form>
   <div data-id="tags"></div>
+  <p data-id="empty-state" hidden>No notes yet</p>
   <ul data-id="list"></ul>
   <p><button data-id="export" type="button">Export notes.json</button>
   <label>Import <input data-id="import" type="file" accept=".json,application/json"></label></p>
@@ -60,6 +61,7 @@
   import { extractTags, filterByTag, resolveActiveTag } from './src/tags.js';
   import { toJson } from './src/export.js';
   import { countText } from './src/count.js';
+  import { emptyMessage } from './src/emptystate.js';
   import { remaining, canSave } from './src/limit.js';
   import { sortNotes, getSort, setSort } from './src/sort.js';
   import { parseImport, mergeImport } from './src/import.js';
@@ -98,6 +100,9 @@
     activeTag = resolveActiveTag(notes, activeTag);
     renderTags(notes);
     document.querySelector('[data-id=count]').textContent = countText(notes.length);
+    const emptyState = document.querySelector('[data-id=empty-state]');
+    emptyState.textContent = emptyMessage(notes);
+    emptyState.hidden = emptyState.textContent === '';
     list.innerHTML = '';
     for (const n of sortPinned(sortNotes(filterByTag(filterNotes(notes, search.value), activeTag), getSort(localStorage))).filter((n) => !pending || n.id !== pending.id)) {
       const li = document.createElement('li');
