@@ -41,7 +41,8 @@
   </form>
   <div data-id="tags"></div>
   <ul data-id="list"></ul>
-  <p><button data-id="export" type="button">Export notes.json</button></p>
+  <p><button data-id="export" type="button">Export notes.json</button>
+  <label>Import <input data-id="import" type="file" accept=".json,application/json"></label></p>
 </main>
 <footer><p data-id="count"></p></footer>
 <div data-id="toast" class="toast" role="status" hidden>
@@ -61,6 +62,8 @@
   import { countText } from './src/count.js';
   import { remaining, canSave } from './src/limit.js';
   import { sortNotes, getSort, setSort } from './src/sort.js';
+  import { parseImport, mergeImport } from './src/import.js';
+  import { KEY } from './src/notes.js';
   const themeBtn = document.querySelector('[data-id=theme]');
   const applyTheme = (name) => { document.documentElement.dataset.theme = name; themeBtn.textContent = name === 'dark' ? 'Light theme' : 'Dark theme'; };
   applyTheme(getTheme(localStorage));
@@ -170,6 +173,18 @@
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 0);
+  });
+  document.querySelector('[data-id=import]').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const merged = mergeImport(listNotes(localStorage), parseImport(await file.text()));
+      localStorage.setItem(KEY, JSON.stringify(merged));
+      render();
+    } catch (err) {
+      alert(err.message);
+    }
+    e.target.value = '';
   });
   search.addEventListener('input', render);
   render();
