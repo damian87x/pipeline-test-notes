@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notes</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; background: #fafaf7; color: #222; }
+  header { padding: 1rem 1.5rem; border-bottom: 1px solid #ddd; display: flex; gap: 1rem; align-items: center; }
+  main { max-width: 40rem; margin: 1.5rem auto; padding: 0 1rem; }
+  li { margin: .4em 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Notes</h1>
+</header>
+<main>
+  <form data-id="form">
+    <input data-id="text" placeholder="Write a note" aria-label="Note text">
+    <button data-id="add">Add</button>
+  </form>
+  <ul data-id="list"></ul>
+</main>
+<script type="module">
+  import { createNote, listNotes } from './src/notes.js';
+  const list = document.querySelector('[data-id=list]');
+  const render = () => { list.innerHTML = ''; for (const n of listNotes(localStorage)) { const li = document.createElement('li'); li.textContent = n.text; list.append(li); } };
+  document.querySelector('[data-id=form]').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = document.querySelector('[data-id=text]');
+    if (input.value.trim()) { createNote(localStorage, input.value); input.value = ''; render(); }
+  });
+  render();
+</script>
+</body>
+</html>
