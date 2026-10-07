@@ -49,7 +49,8 @@
   <p data-id="empty-state" hidden>No notes yet</p>
   <ul data-id="list"></ul>
   <p><button data-id="export" type="button">Export notes.json</button>
-  <label>Import <input data-id="import" type="file" accept=".json,application/json"></label></p>
+  <label>Import <input data-id="import" type="file" accept=".json,application/json"></label>
+  <button data-id="clear-all" type="button">Clear all</button></p>
 </main>
 <footer><p data-id="count"></p><p data-id="words">0 words</p></footer>
 <div data-id="toast" class="toast" role="status" hidden>
@@ -75,6 +76,7 @@
   import { sortNotes, getSort, setSort } from './src/sort.js';
   import { setColor } from './src/color.js';
   import { parseImport, mergeImport } from './src/import.js';
+  import { shouldClear } from './src/clear.js';
   import { KEY } from './src/notes.js';
   const themeBtn = document.querySelector('[data-id=theme]');
   const applyTheme = (name) => { document.documentElement.dataset.theme = name; themeBtn.textContent = name === 'dark' ? 'Light theme' : 'Dark theme'; };
@@ -244,6 +246,14 @@
       alert(err.message);
     }
     e.target.value = '';
+  });
+  document.querySelector('[data-id=clear-all]').addEventListener('click', () => {
+    if (!shouldClear(confirm('Clear all notes?'), listNotes(localStorage))) return;
+    if (pending) { pending.cancel(); pending = null; }
+    toast.hidden = true;
+    editingId = null;
+    localStorage.setItem(KEY, JSON.stringify([]));
+    render();
   });
   search.addEventListener('input', render);
   render();
