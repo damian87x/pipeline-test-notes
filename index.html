@@ -9,12 +9,20 @@
   header { padding: 1rem 1.5rem; border-bottom: 1px solid #ddd; display: flex; gap: 1rem; align-items: center; }
   main { max-width: 40rem; margin: 1.5rem auto; padding: 0 1rem; }
   li { margin: .4em 0; }
+  header button { margin-left: auto; }
+  :root[data-theme=dark] body { background: #16181d; color: #e8e8e8; }
+  :root[data-theme=dark] header { border-bottom-color: #333; }
 </style>
+<script>
+  // Classic (blocking) script: applies the saved theme before the body is parsed, so before first paint. Key matches src/theme.js.
+  try { document.documentElement.dataset.theme = localStorage.getItem('theme.v1') === 'dark' ? 'dark' : 'light'; } catch (e) { document.documentElement.dataset.theme = 'light'; }
+</script>
 </head>
 <body>
 <header>
   <h1>Notes</h1>
   <input data-id="search" type="search" placeholder="Search notes" aria-label="Search notes">
+  <button data-id="theme" type="button">Dark theme</button>
 </header>
 <main>
   <form data-id="form">
@@ -26,6 +34,11 @@
 <script type="module">
   import { createNote, listNotes } from './src/notes.js';
   import { filterNotes } from './src/search.js';
+  import { getTheme, setTheme } from './src/theme.js';
+  const themeBtn = document.querySelector('[data-id=theme]');
+  const applyTheme = (name) => { document.documentElement.dataset.theme = name; themeBtn.textContent = name === 'dark' ? 'Light theme' : 'Dark theme'; };
+  applyTheme(getTheme(localStorage));
+  themeBtn.addEventListener('click', () => { const next = getTheme(localStorage) === 'dark' ? 'light' : 'dark'; setTheme(localStorage, next); applyTheme(next); });
   const list = document.querySelector('[data-id=list]');
   const search = document.querySelector('[data-id=search]');
   const render = () => { list.innerHTML = ''; for (const n of filterNotes(listNotes(localStorage), search.value)) { const li = document.createElement('li'); li.textContent = n.text; list.append(li); } };
