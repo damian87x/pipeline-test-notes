@@ -14,6 +14,7 @@
   [data-id=tags] button[aria-pressed=true] { font-weight: bold; text-decoration: underline; }
   :root[data-theme=dark] body { background: #16181d; color: #e8e8e8; }
   :root[data-theme=dark] header { border-bottom-color: #333; }
+  footer { max-width: 40rem; margin: 0 auto; padding: 0 1rem; }
   .toast { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); background: #222; color: #fff; padding: .6rem 1rem; border-radius: .4rem; display: flex; gap: .75rem; align-items: center; }
   .toast[hidden] { display: none; }
 </style>
@@ -37,6 +38,7 @@
   <ul data-id="list"></ul>
   <p><button data-id="export" type="button">Export notes.json</button></p>
 </main>
+<footer><p data-id="count"></p></footer>
 <div data-id="toast" class="toast" role="status" hidden>
   <span data-id="toast-text"></span>
   <button data-id="undo" type="button">Undo</button>
@@ -51,6 +53,7 @@
   import { startUndo } from './src/undo.js';
   import { extractTags, filterByTag, resolveActiveTag } from './src/tags.js';
   import { toJson } from './src/export.js';
+  import { countText } from './src/count.js';
   const themeBtn = document.querySelector('[data-id=theme]');
   const applyTheme = (name) => { document.documentElement.dataset.theme = name; themeBtn.textContent = name === 'dark' ? 'Light theme' : 'Dark theme'; };
   applyTheme(getTheme(localStorage));
@@ -81,6 +84,7 @@
     const notes = listNotes(localStorage);
     activeTag = resolveActiveTag(notes, activeTag);
     renderTags(notes);
+    document.querySelector('[data-id=count]').textContent = countText(notes.length);
     list.innerHTML = '';
     for (const n of sortPinned(filterByTag(filterNotes(notes, search.value), activeTag)).filter((n) => !pending || n.id !== pending.id)) {
       const li = document.createElement('li');
