@@ -9,7 +9,7 @@
   header { padding: 1rem 1.5rem; border-bottom: 1px solid #ddd; display: flex; gap: 1rem; align-items: center; }
   main { max-width: 40rem; margin: 1.5rem auto; padding: 0 1rem; }
   li { margin: .4em 0; }
-  header button { margin-left: auto; }
+  header select { margin-left: auto; }
   [data-id=tags] button { margin: .2em .3em .2em 0; border-radius: 1em; }
   [data-id=tags] button[aria-pressed=true] { font-weight: bold; text-decoration: underline; }
   :root[data-theme=dark] body { background: #16181d; color: #e8e8e8; }
@@ -27,6 +27,10 @@
 <header>
   <h1>Notes</h1>
   <input data-id="search" type="search" placeholder="Search notes" aria-label="Search notes">
+  <select data-id="sort" aria-label="Sort notes">
+    <option value="newest">newest</option>
+    <option value="oldest">oldest</option>
+  </select>
   <button data-id="theme" type="button">Dark theme</button>
 </header>
 <main>
@@ -56,12 +60,16 @@
   import { toJson } from './src/export.js';
   import { countText } from './src/count.js';
   import { remaining, canSave } from './src/limit.js';
+  import { sortNotes, getSort, setSort } from './src/sort.js';
   const themeBtn = document.querySelector('[data-id=theme]');
   const applyTheme = (name) => { document.documentElement.dataset.theme = name; themeBtn.textContent = name === 'dark' ? 'Light theme' : 'Dark theme'; };
   applyTheme(getTheme(localStorage));
   themeBtn.addEventListener('click', () => { const next = getTheme(localStorage) === 'dark' ? 'light' : 'dark'; setTheme(localStorage, next); applyTheme(next); });
   const list = document.querySelector('[data-id=list]');
   const search = document.querySelector('[data-id=search]');
+  const sortSel = document.querySelector('[data-id=sort]');
+  sortSel.value = getSort(localStorage);
+  sortSel.addEventListener('change', () => { setSort(localStorage, sortSel.value); render(); });
   let editingId = null;
   const toast = document.querySelector('[data-id=toast]');
   const toastText = document.querySelector('[data-id=toast-text]');
@@ -88,7 +96,7 @@
     renderTags(notes);
     document.querySelector('[data-id=count]').textContent = countText(notes.length);
     list.innerHTML = '';
-    for (const n of sortPinned(filterByTag(filterNotes(notes, search.value), activeTag)).filter((n) => !pending || n.id !== pending.id)) {
+    for (const n of sortPinned(sortNotes(filterByTag(filterNotes(notes, search.value), activeTag), getSort(localStorage))).filter((n) => !pending || n.id !== pending.id)) {
       const li = document.createElement('li');
       li.dataset.id = 'note';
       if (editingId === n.id) {
