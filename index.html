@@ -61,6 +61,7 @@
   import { extractTags, filterByTag, resolveActiveTag } from './src/tags.js';
   import { toJson } from './src/export.js';
   import { countText } from './src/count.js';
+  import { formatCreated } from './src/created.js';
   import { emptyMessage } from './src/emptystate.js';
   import { remaining, canSave } from './src/limit.js';
   import { sortNotes, getSort, setSort } from './src/sort.js';
@@ -124,6 +125,10 @@
         span.textContent = n.text;
         li.append(span, ' ');
       }
+      const created = document.createElement('span');
+      created.dataset.id = 'created';
+      created.textContent = formatCreated(n.createdAt);
+      li.append(created, ' ');
       const editBtn = document.createElement('button');
       editBtn.dataset.id = 'edit';
       editBtn.textContent = 'Edit';
