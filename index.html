@@ -51,7 +51,7 @@
   <p><button data-id="export" type="button">Export notes.json</button>
   <label>Import <input data-id="import" type="file" accept=".json,application/json"></label></p>
 </main>
-<footer><p data-id="count"></p></footer>
+<footer><p data-id="count"></p><p data-id="words">0 words</p></footer>
 <div data-id="toast" class="toast" role="status" hidden>
   <span data-id="toast-text"></span>
   <button data-id="undo" type="button">Undo</button>
@@ -68,6 +68,7 @@
   import { extractTags, filterByTag, resolveActiveTag } from './src/tags.js';
   import { toJson } from './src/export.js';
   import { countText } from './src/count.js';
+  import { wordCount } from './src/words.js';
   import { formatCreated } from './src/created.js';
   import { emptyMessage } from './src/emptystate.js';
   import { remaining, canSave } from './src/limit.js';
@@ -109,6 +110,7 @@
     activeTag = resolveActiveTag(notes, activeTag);
     renderTags(notes);
     document.querySelector('[data-id=count]').textContent = countText(notes.length);
+    document.querySelector('[data-id=words]').textContent = `${wordCount(notes)} words`;
     const emptyState = document.querySelector('[data-id=empty-state]');
     emptyState.textContent = emptyMessage(notes);
     emptyState.hidden = emptyState.textContent === '';
