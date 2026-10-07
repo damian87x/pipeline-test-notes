@@ -32,6 +32,7 @@
 <main>
   <form data-id="form">
     <input data-id="text" placeholder="Write a note" aria-label="Note text">
+    <span data-id="remaining">280</span>
     <button data-id="add">Add</button>
   </form>
   <div data-id="tags"></div>
@@ -54,6 +55,7 @@
   import { extractTags, filterByTag, resolveActiveTag } from './src/tags.js';
   import { toJson } from './src/export.js';
   import { countText } from './src/count.js';
+  import { remaining, canSave } from './src/limit.js';
   const themeBtn = document.querySelector('[data-id=theme]');
   const applyTheme = (name) => { document.documentElement.dataset.theme = name; themeBtn.textContent = name === 'dark' ? 'Light theme' : 'Dark theme'; };
   applyTheme(getTheme(localStorage));
@@ -141,11 +143,16 @@
     toast.hidden = true;
     render();
   });
+  const MAX = 280;
+  const textInput = document.querySelector('[data-id=text]');
+  const remainingEl = document.querySelector('[data-id=remaining]');
+  const updateRemaining = () => { remainingEl.textContent = String(remaining(textInput.value, MAX)); };
   document.querySelector('[data-id=form]').addEventListener('submit', (e) => {
     e.preventDefault();
     const input = document.querySelector('[data-id=text]');
-    if (input.value.trim()) { createNote(localStorage, input.value); input.value = ''; render(); }
+    if (input.value.trim() && canSave(input.value, MAX)) { createNote(localStorage, input.value); input.value = ''; updateRemaining(); render(); }
   });
+  textInput.addEventListener('input', updateRemaining);
   document.querySelector('[data-id=export]').addEventListener('click', () => {
     const url = URL.createObjectURL(new Blob([toJson(listNotes(localStorage))], { type: 'application/json' }));
     const a = document.createElement('a');
