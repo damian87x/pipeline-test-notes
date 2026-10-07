@@ -33,6 +33,7 @@
 <header>
   <h1>Notes</h1>
   <input data-id="search" type="search" placeholder="Search notes" aria-label="Search notes">
+  <label><input data-id="star-filter" type="checkbox"> Starred only</label>
   <select data-id="sort" aria-label="Sort notes">
     <option value="newest">newest</option>
     <option value="oldest">oldest</option>
@@ -63,6 +64,7 @@
   import { filterNotes } from './src/search.js';
   import { getTheme, setTheme } from './src/theme.js';
   import { togglePin, sortPinned } from './src/pin.js';
+  import { filterStarred, toggleStar } from './src/star.js';
   import { editNote } from './src/edit.js';
   import { duplicateNote } from './src/duplicate.js';
   import { startUndo } from './src/undo.js';
@@ -84,6 +86,9 @@
   themeBtn.addEventListener('click', () => { const next = getTheme(localStorage) === 'dark' ? 'light' : 'dark'; setTheme(localStorage, next); applyTheme(next); });
   const list = document.querySelector('[data-id=list]');
   const search = document.querySelector('[data-id=search]');
+  const starFilter = document.querySelector('[data-id=star-filter]');
+  starFilter.checked = localStorage.getItem('star-filter.v1') === 'true';
+  starFilter.addEventListener('change', () => { localStorage.setItem('star-filter.v1', String(starFilter.checked)); render(); });
   const sortSel = document.querySelector('[data-id=sort]');
   sortSel.value = getSort(localStorage);
   sortSel.addEventListener('change', () => { setSort(localStorage, sortSel.value); render(); });
@@ -117,7 +122,7 @@
     emptyState.textContent = emptyMessage(notes);
     emptyState.hidden = emptyState.textContent === '';
     list.innerHTML = '';
-    for (const n of sortPinned(sortNotes(filterByTag(filterNotes(notes, search.value), activeTag), getSort(localStorage))).filter((n) => !pending || n.id !== pending.id)) {
+    for (const n of sortPinned(sortNotes(filterStarred(filterByTag(filterNotes(notes, search.value), activeTag), starFilter.checked), getSort(localStorage))).filter((n) => !pending || n.id !== pending.id)) {
       const li = document.createElement('li');
       li.dataset.id = 'note';
       li.dataset.noteId = String(n.id);
@@ -153,6 +158,13 @@
       btn.textContent = n.pinned ? 'Unpin' : 'Pin';
       btn.addEventListener('click', () => { togglePin(localStorage, n.id); render(); });
       li.append(btn, ' ');
+      const starBtn = document.createElement('button');
+      starBtn.dataset.id = 'star';
+      starBtn.type = 'button';
+      starBtn.textContent = n.starred ? 'Unstar' : 'Star';
+      starBtn.setAttribute('aria-pressed', String(Boolean(n.starred)));
+      starBtn.addEventListener('click', () => { toggleStar(localStorage, n.id); render(); });
+      li.append(starBtn, ' ');
       const duplicateBtn = document.createElement('button');
       duplicateBtn.dataset.id = 'duplicate';
       duplicateBtn.dataset.noteId = String(n.id);
