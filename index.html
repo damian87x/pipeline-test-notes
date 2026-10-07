@@ -33,6 +33,7 @@
 </main>
 <script type="module">
   import { createNote, listNotes } from './src/notes.js';
+  import { deleteNote, renderDeleteButton } from './src/delete.js';
   import { filterNotes } from './src/search.js';
   import { getTheme, setTheme } from './src/theme.js';
   const themeBtn = document.querySelector('[data-id=theme]');
@@ -41,7 +42,11 @@
   themeBtn.addEventListener('click', () => { const next = getTheme(localStorage) === 'dark' ? 'light' : 'dark'; setTheme(localStorage, next); applyTheme(next); });
   const list = document.querySelector('[data-id=list]');
   const search = document.querySelector('[data-id=search]');
-  const render = () => { list.innerHTML = ''; for (const n of filterNotes(listNotes(localStorage), search.value)) { const li = document.createElement('li'); li.textContent = n.text; list.append(li); } };
+  const render = () => { list.innerHTML = ''; for (const n of filterNotes(listNotes(localStorage), search.value)) { const li = document.createElement('li'); const span = document.createElement('span'); span.textContent = n.text; li.append(span, ' '); li.insertAdjacentHTML('beforeend', renderDeleteButton(n)); list.append(li); } };
+  list.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-id=delete]');
+    if (b) { deleteNote(localStorage, Number(b.dataset.noteId)); render(); }
+  });
   document.querySelector('[data-id=form]').addEventListener('submit', (e) => {
     e.preventDefault();
     const input = document.querySelector('[data-id=text]');
