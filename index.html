@@ -12,6 +12,8 @@
   header button { margin-left: auto; }
   :root[data-theme=dark] body { background: #16181d; color: #e8e8e8; }
   :root[data-theme=dark] header { border-bottom-color: #333; }
+  .toast { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); background: #222; color: #fff; padding: .6rem 1rem; border-radius: .4rem; display: flex; gap: .75rem; align-items: center; }
+  .toast[hidden] { display: none; }
 </style>
 <script>
   // Classic (blocking) script: applies the saved theme before the body is parsed, so before first paint. Key matches src/theme.js.
@@ -31,6 +33,10 @@
   </form>
   <ul data-id="list"></ul>
 </main>
+<div data-id="toast" class="toast" role="status" hidden>
+  <span data-id="toast-text"></span>
+  <button data-id="undo" type="button">Undo</button>
+</div>
 <script type="module">
   import { createNote, listNotes } from './src/notes.js';
   import { deleteNote, renderDeleteButton } from './src/delete.js';
@@ -38,6 +44,7 @@
   import { getTheme, setTheme } from './src/theme.js';
   import { togglePin, sortPinned } from './src/pin.js';
   import { editNote } from './src/edit.js';
+  import { startUndo } from './src/undo.js';
   const themeBtn = document.querySelector('[data-id=theme]');
   const applyTheme = (name) => { document.documentElement.dataset.theme = name; themeBtn.textContent = name === 'dark' ? 'Light theme' : 'Dark theme'; };
   applyTheme(getTheme(localStorage));
@@ -45,9 +52,12 @@
   const list = document.querySelector('[data-id=list]');
   const search = document.querySelector('[data-id=search]');
   let editingId = null;
+  const toast = document.querySelector('[data-id=toast]');
+  const toastText = document.querySelector('[data-id=toast-text]');
+  let pending = null; // { id, cancel }: a deleted note waiting out its undo countdown
   const render = () => {
     list.innerHTML = '';
-    for (const n of sortPinned(filterNotes(listNotes(localStorage), search.value))) {
+    for (const n of sortPinned(filterNotes(listNotes(localStorage), search.value)).filter((n) => !pending || n.id !== pending.id)) {
       const li = document.createElement('li');
       li.dataset.id = 'note';
       if (editingId === n.id) {
@@ -84,7 +94,23 @@
   };
   list.addEventListener('click', (e) => {
     const b = e.target.closest('[data-id=delete]');
-    if (b) { deleteNote(localStorage, Number(b.dataset.noteId)); render(); }
+    if (!b) return;
+    if (pending) { pending.cancel(); deleteNote(localStorage, pending.id); pending = null; }
+    const id = Number(b.dataset.noteId);
+    if (editingId === id) editingId = null;
+    pending = { id, cancel: null };
+    pending.cancel = startUndo(
+      (n) => { toastText.textContent = `Note deleted. Undo (${n})`; toast.hidden = false; },
+      () => { deleteNote(localStorage, id); pending = null; toast.hidden = true; render(); },
+    );
+    render();
+  });
+  document.querySelector('[data-id=undo]').addEventListener('click', () => {
+    if (!pending) return;
+    pending.cancel();
+    pending = null;
+    toast.hidden = true;
+    render();
   });
   document.querySelector('[data-id=form]').addEventListener('submit', (e) => {
     e.preventDefault();
